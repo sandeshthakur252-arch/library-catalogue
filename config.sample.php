@@ -1,7 +1,8 @@
 <?php
-// Edit these with your mi-linux MySQL details.
-const DB_HOST = 'localhost';
-const DB_NAME = 'your_database';
-const DB_USER = 'your_username';
-const DB_PASS = 'your_password';
+// Default XAMPP MySQL settings. Change DB_PASS if you set a root password.
+const DB_HOST = '127.0.0.1';
+const DB_PORT = 3306;
+const DB_NAME = 'library_catalogue';
+const DB_USER = 'root';
+const DB_PASS = '';
 const PER_PAGE = 8;
