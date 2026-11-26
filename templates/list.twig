@@ -1,0 +1,39 @@
+{% extends "base.twig" %}
+{% block content %}
+<h1>Books <small>({{ total }} found)</small></h1>
+<form method="get" action="index.php" class="search" autocomplete="off">
+  <div class="suggest-wrap">
+    <input type="search" id="q" name="q" value="{{ q }}" placeholder="Title or author…" maxlength="50">
+    <ul id="suggestions" hidden></ul>
+  </div>
+  <select name="genre">
+    <option value="0">All genres</option>
+    {% for g in genres %}<option value="{{ g.id }}" {{ g.id == genre ? 'selected' }}>{{ g.name }}</option>{% endfor %}
+  </select>
+  <input type="number" name="from" value="{{ from }}" placeholder="Year from" min="1000" max="2200">
+  <input type="number" name="to" value="{{ to }}" placeholder="Year to" min="1000" max="2200">
+  <button>Search</button>
+  <a href="index.php">Reset</a>
+</form>
+
+{% if books %}
+<table>
+  <thead><tr><th>Title</th><th>Author</th><th>Genre</th><th>Year</th></tr></thead>
+  <tbody>
+  {% for b in books %}
+    <tr>
+      <td><a href="view.php?id={{ b.id }}">{{ b.title }}</a></td>
+      <td>{{ b.author }}</td><td>{{ b.genre }}</td><td>{{ b.year }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="pager">
+  {% if page > 1 %}<a href="?{{ qs }}&page={{ page - 1 }}">&laquo; Prev</a>{% endif %}
+  Page {{ page }} of {{ pages }}
+  {% if page < pages %}<a href="?{{ qs }}&page={{ page + 1 }}">Next &raquo;</a>{% endif %}
+</p>
+{% else %}
+<p>No books match your search.</p>
+{% endif %}
+{% endblock %}
