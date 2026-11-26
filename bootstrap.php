@@ -119,10 +119,10 @@ function clear_login_attempts(string $username): void {
     $st->execute([$key]);
 }
 
-// ---- Authorisation: only the creator may change a book (books with no owner, e.g. seed data, are open to any logged-in user) ----
+// ---- Authorisation: only the creator may change a book; ownerless books are read-only ----
 function can_modify($createdBy): bool {
     $u = current_user();
-    return $u !== null && ($createdBy === null || (int)$createdBy === (int)$u['id']);
+    return $u !== null && $createdBy !== null && (int)$createdBy === (int)$u['id'];
 }
 
 // ---- Twig template engine (autoescape ON: all output is HTML-escaped by default) ----
