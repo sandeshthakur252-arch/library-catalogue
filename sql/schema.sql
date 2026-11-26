@@ -1,11 +1,19 @@
 -- Run in phpMyAdmin / mysql client against your own database (it must already exist on mi-linux).
-DROP TABLE IF EXISTS books; DROP TABLE IF EXISTS genres; DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS books; DROP TABLE IF EXISTS login_attempts; DROP TABLE IF EXISTS genres; DROP TABLE IF EXISTS users;
 
 CREATE TABLE users (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(30) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE login_attempts (
+  bucket_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+  attempts SMALLINT UNSIGNED NOT NULL,
+  window_started_at DATETIME NOT NULL,
+  locked_until DATETIME NULL,
+  INDEX (window_started_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE genres (

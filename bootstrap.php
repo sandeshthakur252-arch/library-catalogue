@@ -83,6 +83,42 @@ function require_login(): void {
     if (!current_user()) { flash('Please log in first.', 'error'); header('Location: login.php'); exit; }
 }
 
+function login_attempt_allowed(string $username): bool {
+    $pdo = db();
+    $pdo->exec('DELETE FROM login_attempts WHERE window_started_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 DAY) LIMIT 100');
+
+    $key = hash('sha256', strtolower(trim($username)) . "\0" . (string)($_SERVER['REMOTE_ADDR'] ?? ''));
+    $st = $pdo->prepare('SELECT locked_until FROM login_attempts WHERE bucket_key = ? AND locked_until > UTC_TIMESTAMP()');
+    $st->execute([$key]);
+    if ($st->fetchColumn() !== false) { return false; }
+
+    $st = $pdo->prepare(
+        'INSERT INTO login_attempts (bucket_key, attempts, window_started_at)
+         VALUES (?, 1, UTC_TIMESTAMP())
+         ON DUPLICATE KEY UPDATE
+           attempts = IF(window_started_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 15 MINUTE), 1, attempts + 1),
+           locked_until = IF(
+             window_started_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 15 MINUTE),
+             NULL,
+             IF(locked_until > UTC_TIMESTAMP(), locked_until,
+               IF(attempts >= 5, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 15 MINUTE), NULL)
+             )
+           ),
+           window_started_at = IF(window_started_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 15 MINUTE), UTC_TIMESTAMP(), window_started_at)'
+    );
+    $st->execute([$key]);
+
+    $st = $pdo->prepare('SELECT attempts FROM login_attempts WHERE bucket_key = ?');
+    $st->execute([$key]);
+    return (int)$st->fetchColumn() <= 5;
+}
+
+function clear_login_attempts(string $username): void {
+    $key = hash('sha256', strtolower(trim($username)) . "\0" . (string)($_SERVER['REMOTE_ADDR'] ?? ''));
+    $st = db()->prepare('DELETE FROM login_attempts WHERE bucket_key = ?');
+    $st->execute([$key]);
+}
+
 // ---- Authorisation: only the creator may change a book (books with no owner, e.g. seed data, are open to any logged-in user) ----
 function can_modify($createdBy): bool {
     $u = current_user();
